@@ -265,15 +265,17 @@ var CBCentralManagerDelegateImpl = (function (_super) {
     
     // find the peri in the array and attach the delegate to that
     var peri = Bluetooth._findPeripheral(peripheral.identifier.UUIDString);
-    console.log("----- delegate centralManager:didConnectPeripheral: cached perio: " + peri);
-    
-    var cb = Bluetooth._state.connectCallbacks[peripheral.identifier.UUIDString];
-    var delegate = CBPeripheralDelegateImpl.new().initWithCallback(cb);
-    CFRetain(delegate);
-    peri.delegate = delegate;
-    
-    console.log("----- delegate centralManager:didConnectPeripheral, let's discover service");
-    peri.discoverServices(null);
+    if(peri) { 
+      console.log("----- delegate centralManager:didConnectPeripheral: cached perio: " + peri);
+
+      var cb = Bluetooth._state.connectCallbacks[peripheral.identifier.UUIDString];
+      var delegate = CBPeripheralDelegateImpl.new().initWithCallback(cb);
+      CFRetain(delegate);
+      peri.delegate = delegate;
+
+      console.log("----- delegate centralManager:didConnectPeripheral, let's discover service");
+      peri.discoverServices(null);
+    }
   };
   CBCentralManagerDelegateImpl.prototype.centralManagerDidDisconnectPeripheralError = function(central, peripheral, error) {
     // this event needs to be honored by the client as any action afterwards crashes the app
@@ -493,13 +495,15 @@ Bluetooth.isConnected = function (arg) {
 };
 
 Bluetooth._findService = function (UUID, peripheral) {
-  for (var i = 0; i < peripheral.services.count; i++) {
-    var service = peripheral.services.objectAtIndex(i);
-    // console.log("--- service.UUID: " + service.UUID);
-    // TODO this may need a different compare, see Cordova plugin's findServiceFromUUID function
-    if (UUID.UUIDString == service.UUID.UUIDString) {
-      // console.log("--- found our service with UUID: " + service.UUID);
-      return service;
+  if(peripheral && peripheral.services) { 
+    for (var i = 0; i < peripheral.services.count; i++) {
+      var service = peripheral.services.objectAtIndex(i);
+      // console.log("--- service.UUID: " + service.UUID);
+      // TODO this may need a different compare, see Cordova plugin's findServiceFromUUID function
+      if (UUID.UUIDString == service.UUID.UUIDString) {
+        // console.log("--- found our service with UUID: " + service.UUID);
+        return service;
+      }
     }
   }
   // service not found on this peripheral
